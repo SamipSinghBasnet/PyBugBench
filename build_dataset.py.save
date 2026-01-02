@@ -1,0 +1,150 @@
+from git import Repo
+from tqdm import tqdm
+
+from radon.complexity import cc_visit
+from radon.metrics def is_bugfix_commit(message: str) -> bool:
+    """Check if a commit message indicates a bug fix."""
+    message = message.lower()
+    return any(keyword in message for keyword in BUGFIX_KEYWORDS)
+
+
+def extract_code_metrics(code: str):
+    """Compute cyclomatic complexity and maintainability index."""
+    try:
+        cc = cc_visit(code)
+        avg_cc = sum(c.complexity for c in cc) / len(cc) if cc else 0
+        mi = mi_visit(code)
+        return avg_cc, mi
+    except:
+        return 0, 0
+
+
+def detect_branch(repo):
+    """Detect whether the repo uses master, main, or other common branches."""
+    branches = ["master", "main", "dev", "development"]
+    for b in branches:
+        try:
+            repo.git.rev_parse(b)
+            return b
+        except:
+            continue
+    return None
+
+
+def process_repo(repo_name: str):
+    """Process one repo: identify bugfix commits and extract metrics."""
+    repo_path = REPOS_DIR / repo_name
+    print(f"\n=== Processing repo: {repo_name} ===")
+    print(f"Path: {repo_path}")
+
+    try:
+        repo = Repo(repo_path)
+    except:
+        print("[ERROR] Could not open repo.")
+        return []
+
+    # Branch detection
+    branch = detect_branch(repo)
+    if not branch:
+        print(f"[ERROR] No valid branch found for {repo_name}. Skipping.")
+        return []
+
+    print(f"Using branch: {branch}")
+
+    # Get commits
+    commits = list(repo.iter_commits(branch))
+    if MAX_COMMITS_PER_REPO:
+        commits = commits[:MAX_COMMITS_PER_REPO]
+
+    # Identify bug fix commits
+    bugfix_commits = set()
+    print("Identifying bug-fix commits...")
+
+    for c in tqdm(commits, desc=f"{repo_name} - bugfix scan"):
+        if is_bugfix_commit(c.message):
+            bugfix_commits.add(c.hexsha)
+
+    # Extract file-level metrics
+    rows = []
+    print("Extracting features...")
+
+    for c in tqdm(commits, desc=f"{repo_name} - feature extraction"):
+        for f in c.stats.files:
+
+            if not any(f.endswith(ext) for ext in PYTHON_EXTENSIONS):
+                continue
+
+            try:
+                blob = c.tree / f
+                code = blob.data_stream.read().decode("utf-8", errors="ignore")
+            except:
+                continue
+
+            avg_cc, mi = extract_code_metrics(code)
+
+            rows.append({
+                "repo": repo_name,
+                "commit": c.hexsha,
+                "file": f,
+                "buggy": int(c.hexsha in bugfix_commits),
+                "loc": code.count("\n"),
+                "avg_complexity": avg_cc,
+                "maintainability": mi,
+            })
+
+    print(f"Total rows collected for {repo_name}: {len(rows)}")
+    return rows
+
+
+def main():
+    output_dir = Path("data")
+    output_dir.mkdir(exist_ok=True)
+
+    all_csv_paths = []
+
+    for repo_name in TARGET_REPOS:
+
+        repo_csv = output_dir / f"{repo_name}_bug_data.csv"
+
+        # Resume support
+        if repo_csv.exists() and repo_csv.stat().st_size > 0:
+            print(f"[SKIP] {repo_name} already processed.")
+            all_csv_paths.append(repo_csv)
+            continue
+
+        rows = process_repo(repo_name)
+
+        if not rows:
+            print(f"[WARN] No rows for {repo_name}.")
+            continue
+
+        df = pd.DataFrame(rows)
+        df.to_csv(repo_csv, index=False)
+
+        print(f"[OK] Saved {len(df)} rows → {repo_csv}")
+        all_csv_paths.append(repo_csv)
+
+    # Merge all repo CSVs
+    print("\nMerging all datasets...")
+
+    merged = []
+    for p in all_csv_paths:
+        try:
+            merged.append(pd.read_csv(p))
+        except Exception as e:
+            print(f"[WARN] Error reading {p}: {e}")
+
+    if not merged:
+        print("[ERROR] Nothing to merge.")
+        return
+
+    df_all = pd.concat(merged, ignore_index=True)
+    final_path = output_dir / "python_bug_data.csv"
+    df_all.to_csv(final_path, index=False)
+
+    print(f"\n✅ Final merged dataset saved to: {final_path}")
+    print(f"Total rows: {len(df_all)}")
+
+
+if __name__ == "__main__":
+    main()

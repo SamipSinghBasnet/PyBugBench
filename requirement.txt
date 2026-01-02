@@ -1,0 +1,13 @@
+GitPython==3.1.43
+radon==5.1.0
+pandas==1.5.3
+numpy==1.23.5
+scikit-learn==1.2.2
+matplotlib==3.7.2
+tqdm==4.66.5
+xgboost==1.7.6
+lightgbm==4.1.0
+catboost==1.2.5
+transformers==4.46.3
+torch==2.4.1
+pyarrow==18.1.0

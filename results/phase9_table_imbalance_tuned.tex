@@ -1,0 +1,18 @@
+\begin{tabular}{lllrrrrrr}
+\toprule
+       scope &        model &        variant &  threshold &  accuracy &  precision &  recall &     f1 &  roc\_auc \\
+\midrule
+      global & RandomForest & baseline\_tuned &     0.1000 &    0.3550 &     0.3530 &  0.9921 & 0.5207 &   0.5394 \\
+      global & RandomForest & balanced\_tuned &     0.1000 &    0.3548 &     0.3530 &  0.9931 & 0.5208 &   0.5386 \\
+      global &     LightGBM & baseline\_tuned &     0.2500 &    0.3577 &     0.3541 &  0.9943 & 0.5223 &   0.5464 \\
+      global &     LightGBM & balanced\_tuned &     0.1000 &    0.3531 &     0.3531 &  1.0000 & 0.5219 &   0.5464 \\
+      django & RandomForest & baseline\_tuned &     0.1000 &    0.5727 &     0.5733 &  0.9962 & 0.7278 &   0.5593 \\
+      django & RandomForest & balanced\_tuned &     0.1000 &    0.5725 &     0.5733 &  0.9957 & 0.7276 &   0.5611 \\
+      django &     LightGBM & baseline\_tuned &     0.4000 &    0.5741 &     0.5741 &  0.9967 & 0.7286 &   0.5733 \\
+      django &     LightGBM & balanced\_tuned &     0.3000 &    0.5741 &     0.5741 &  0.9967 & 0.7286 &   0.5733 \\
+scikit-learn & RandomForest & baseline\_tuned &     0.1000 &    0.2700 &     0.2365 &  0.9500 & 0.3787 &   0.5694 \\
+scikit-learn & RandomForest & balanced\_tuned &     0.3000 &    0.3002 &     0.2386 &  0.9073 & 0.3778 &   0.5627 \\
+scikit-learn &     LightGBM & baseline\_tuned &     0.1500 &    0.2976 &     0.2430 &  0.9455 & 0.3867 &   0.5829 \\
+scikit-learn &     LightGBM & balanced\_tuned &     0.4000 &    0.3375 &     0.2475 &  0.8962 & 0.3879 &   0.5829 \\
+\bottomrule
+\end{tabular}

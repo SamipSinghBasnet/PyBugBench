@@ -1,0 +1,12 @@
+PHASE 7 – Error analysis summary
+================================
+
+Global LightGBM (class_weight='balanced', thr=0.5)
+accuracy: 0.5187
+precision: 0.3810
+recall: 0.5808
+f1: 0.4601
+roc_auc: 0.5473
+
+False positives (count): 46577
+False negatives (count): 20688
